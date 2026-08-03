@@ -5,17 +5,6 @@ allprojects {
     }
 }
 
-subprojects {
-    afterEvaluate {
-        if (project.plugins.hasPlugin("com.android.library") ||
-            project.plugins.hasPlugin("com.android.application")) {
-            if (!project.plugins.hasPlugin("org.jetbrains.kotlin.android")) {
-                project.apply(plugin = "org.jetbrains.kotlin.android")
-            }
-        }
-    }
-}
-
 val newBuildDir: Directory =
     rootProject.layout.buildDirectory
         .dir("../../build")
