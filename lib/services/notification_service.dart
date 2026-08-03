@@ -1,15 +1,12 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/timezone.dart' as tz;
-import 'package:timezone/data/latest.dart' as tz;
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 class NotificationService {
-  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
 
   Future<void> init() async {
-    tz.initializeTimeZones();
-
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
@@ -20,31 +17,28 @@ class NotificationService {
       requestSoundPermission: true,
     );
 
-    const InitializationSettings initializationSettings = InitializationSettings(
+    final InitializationSettings initializationSettings =
+        InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsIOS,
     );
 
     await _localNotifications.initialize(
-      initializationSettings,
+      settings: initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         // Handle notification tap
-        print('Notification tapped with payload: ${response.payload}');
       },
     );
 
-    // Initialize FCM (request permissions)
+    // Initialize FCM
     await _fcm.requestPermission(
       alert: true,
-      announcement: false,
       badge: true,
-      carPlay: false,
-      criticalAlert: false,
-      provisional: false,
       sound: true,
     );
   }
 
+  /// Schedule a notification at a future time
   Future<void> scheduleNotification({
     required int id,
     required String title,
@@ -52,30 +46,57 @@ class NotificationService {
     required DateTime scheduledDate,
     String? payload,
   }) async {
-    await _localNotifications.zonedSchedule(
-      id,
-      title,
-      body,
-      tz.TZDateTime.from(scheduledDate, tz.local),
-      const NotificationDetails(
+    final delay = scheduledDate.difference(DateTime.now());
+    if (delay.isNegative) return;
+
+    // Use Future.delayed + show() to avoid timezone dependency
+    Future.delayed(delay, () async {
+      await _localNotifications.show(
+        id: id,
+        title: title,
+        body: body,
+        notificationDetails: const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'reminders_channel',
+            'Reminders',
+            channelDescription: 'Channel for service reminders',
+            importance: Importance.max,
+            priority: Priority.high,
+          ),
+          iOS: DarwinNotificationDetails(),
+        ),
+        payload: payload,
+      );
+    });
+  }
+
+  /// Show an immediate notification
+  Future<void> showNotification({
+    required int id,
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    await _localNotifications.show(
+      id: id,
+      title: title,
+      body: body,
+      notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
-          'reminders_channel',
-          'Reminders',
-          channelDescription: 'Channel for service reminders',
+          'service_channel',
+          'Service Updates',
+          channelDescription: 'Channel for service notifications',
           importance: Importance.max,
           priority: Priority.high,
         ),
         iOS: DarwinNotificationDetails(),
       ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
       payload: payload,
     );
   }
 
   Future<void> cancelNotification(int id) async {
-    await _localNotifications.cancel(id);
+    await _localNotifications.cancel(id: id);
   }
 
   Future<void> cancelAllNotifications() async {

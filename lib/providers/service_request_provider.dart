@@ -1,54 +1,102 @@
 import 'package:flutter/material.dart';
+import 'package:service_pro/config/constants.dart';
+import 'package:service_pro/models/service_request_model.dart';
+import 'package:service_pro/services/firestore_service.dart';
 import 'dart:async';
 
 class ServiceRequestProvider extends ChangeNotifier {
-  List<dynamic> _services = [];
-  List<dynamic> _filteredServices = [];
+  final FirestoreService _firestoreService = FirestoreService();
+
+  List<ServiceRequestModel> _services = [];
+  List<ServiceRequestModel> _filteredServices = [];
   bool _isLoading = false;
   String? _error;
   String? _selectedStatus;
   String? _selectedType;
-  
+
   StreamSubscription? _serviceSubscription;
 
-  List<dynamic> get services => _services;
-  List<dynamic> get filteredServices => _filteredServices;
+  List<ServiceRequestModel> get services => _filteredServices;
+  List<ServiceRequestModel> get allServices => _services;
+  List<ServiceRequestModel> get filteredServices => _filteredServices;
   bool get isLoading => _isLoading;
   String? get error => _error;
   String? get selectedStatus => _selectedStatus;
   String? get selectedType => _selectedType;
 
-  int get pendingCount => _services.where((s) => s.status == 'Pending').length;
-  int get inProgressCount => _services.where((s) => s.status == 'In Progress').length;
-  int get completedCount => _services.where((s) => s.status == 'Completed').length;
+  int get pendingCount =>
+      _services.where((s) => s.status == ServiceStatus.pending).length;
+  int get inProgressCount =>
+      _services.where((s) => s.status == ServiceStatus.inProgress).length;
+  int get completedCount =>
+      _services.where((s) => s.status == ServiceStatus.completed).length;
   int get totalCount => _services.length;
 
   Future<void> loadServices(String adminId) async {
     _setLoading(true);
     try {
-      // TODO: Implement load services from FirestoreService
-      // _serviceSubscription = _firestoreService.getServicesStream(adminId).listen((data) {
-      //   _services = data;
-      //   _applyFilters();
-      // });
+      _serviceSubscription?.cancel();
+      _serviceSubscription =
+          _firestoreService.getServicesStream(adminId).listen((data) {
+        _services = data;
+        _applyFilters();
+      });
     } catch (e) {
       _error = e.toString();
       _setLoading(false);
     }
   }
 
-  Future<void> createService(dynamic serviceData) async {
+  Future<void> createService({
+    required String adminId,
+    required String customerId,
+    required String customerName,
+    required String customerPhone,
+    required ServiceType serviceType,
+    required String title,
+    String? description,
+    required ServicePriority priority,
+    String? assignedStaffId,
+    String? assignedStaffName,
+    DateTime? scheduledDate,
+    double? locationLat,
+    double? locationLng,
+    String? locationAddress,
+  }) async {
     try {
-      // TODO: Implement create
+      final now = DateTime.now();
+      final id = _firestoreService.generateId('service_requests');
+      final service = ServiceRequestModel(
+        id: id,
+        adminId: adminId,
+        customerId: customerId,
+        customerName: customerName,
+        customerPhone: customerPhone,
+        assignedStaffId: assignedStaffId,
+        assignedStaffName: assignedStaffName,
+        serviceType: serviceType,
+        title: title,
+        description: description,
+        status: ServiceStatus.pending,
+        priority: priority,
+        locationLat: locationLat,
+        locationLng: locationLng,
+        locationAddress: locationAddress,
+        scheduledDate: scheduledDate,
+        createdAt: now,
+        updatedAt: now,
+      );
+      await _firestoreService.createServiceRequest(service);
     } catch (e) {
       _error = e.toString();
       notifyListeners();
+      rethrow;
     }
   }
 
-  Future<void> updateServiceStatus(String serviceId, String status) async {
+  Future<void> updateServiceStatus(String serviceId, ServiceStatus status) async {
     try {
-      // TODO: Implement update
+      await _firestoreService.updateServiceStatus(serviceId, status);
     } catch (e) {
       _error = e.toString();
       notifyListeners();
@@ -57,7 +105,7 @@ class ServiceRequestProvider extends ChangeNotifier {
 
   Future<void> deleteService(String serviceId) async {
     try {
-      // TODO: Implement delete
+      await _firestoreService.deleteServiceRequest(serviceId);
     } catch (e) {
       _error = e.toString();
       notifyListeners();
@@ -73,28 +121,30 @@ class ServiceRequestProvider extends ChangeNotifier {
     _selectedType = type;
     _applyFilters();
   }
-  
+
   void filterByStaff(String? staffId) {
-    // TODO: implement staff filter
     _applyFilters();
   }
-  
+
   void searchServices(String query) {
-    // TODO: implement search
     _applyFilters();
   }
 
   void _applyFilters() {
     _filteredServices = List.from(_services);
-    
+
     if (_selectedStatus != null) {
-      _filteredServices = _filteredServices.where((s) => s.status == _selectedStatus).toList();
+      _filteredServices = _filteredServices
+          .where((s) => s.status.name == _selectedStatus)
+          .toList();
     }
-    
+
     if (_selectedType != null) {
-      _filteredServices = _filteredServices.where((s) => s.type == _selectedType).toList();
+      _filteredServices = _filteredServices
+          .where((s) => s.serviceType.name == _selectedType)
+          .toList();
     }
-    
+
     notifyListeners();
     _setLoading(false);
   }
@@ -103,7 +153,7 @@ class ServiceRequestProvider extends ChangeNotifier {
     _isLoading = value;
     notifyListeners();
   }
-  
+
   @override
   void dispose() {
     _serviceSubscription?.cancel();

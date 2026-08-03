@@ -68,8 +68,8 @@ class _StaffManagementState extends State<StaffManagement> {
               final staff = provider.staffList[index];
               return StaffCard(
                 staff: staff,
-                onToggleActive: () {
-                  provider.toggleStaffActive(staff.uid, !staff.isActive);
+                onToggleActive: (bool value) {
+                  provider.toggleStaffActive(staff.uid, value);
                 },
                 onRemove: () => _confirmRemoveStaff(context, staff.uid, staff.name),
               ).animate(delay: Duration(milliseconds: 50 * index)).fadeIn().slideX(begin: 0.05);

@@ -185,7 +185,7 @@ class _ClearRequestsScreenState extends State<ClearRequestsScreen> {
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              await _firestoreService.approveClearRequest(request.id, request.serviceRequestId);
+              await _firestoreService.respondToClearRequest(request.id, request.serviceRequestId, true);
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Clear request approved!'), backgroundColor: Color(0xFF66BB6A)),
@@ -222,7 +222,7 @@ class _ClearRequestsScreenState extends State<ClearRequestsScreen> {
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              await _firestoreService.rejectClearRequest(request.id, request.serviceRequestId);
+              await _firestoreService.respondToClearRequest(request.id, request.serviceRequestId, false);
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Clear request rejected'), backgroundColor: Color(0xFFEF5350)),

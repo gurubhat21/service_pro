@@ -29,11 +29,14 @@ class _StaffServiceDetailState extends State<StaffServiceDetail> {
       if (newStatus == ServiceStatus.clearRequested) {
         // Create Clear Request Model
         final clearRequest = ClearRequestModel(
-          id: '', // Will be generated
-          serviceId: widget.service.id,
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          serviceRequestId: widget.service.id,
           staffId: widget.service.assignedStaffId ?? '',
+          staffName: widget.service.assignedStaffName ?? '',
+          adminId: widget.service.adminId,
           note: note,
           status: ClearRequestStatus.pending,
+          serviceTitle: widget.service.title,
           createdAt: DateTime.now(),
         );
         await _firestoreService.createClearRequest(clearRequest);
@@ -170,10 +173,10 @@ class _StaffServiceDetailState extends State<StaffServiceDetail> {
           const SizedBox(height: 8),
           Row(
             children: [
-              Icon(_getServiceIcon(srv.type), color: const Color(0xFF00BCD4), size: 18),
+              Icon(_getServiceIcon(srv.serviceType), color: const Color(0xFF00BCD4), size: 18),
               const SizedBox(width: 8),
               Text(
-                srv.type.name.toUpperCase(),
+                srv.serviceType.name.toUpperCase(),
                 style: const TextStyle(color: Color(0xFF00BCD4), fontWeight: FontWeight.w600),
               ),
               const Spacer(),
@@ -215,7 +218,7 @@ class _StaffServiceDetailState extends State<StaffServiceDetail> {
                 CircleAvatar(
                   backgroundColor: const Color(0xFF161B22),
                   child: Text(
-                    srv.customerName.isNotEmpty ? srv.customerName[0].toUpperCase() : '?',
+                    (srv.customerName ?? '').isNotEmpty ? srv.customerName![0].toUpperCase() : '?',
                     style: const TextStyle(color: Colors.white),
                   ),
                 ),
@@ -224,9 +227,9 @@ class _StaffServiceDetailState extends State<StaffServiceDetail> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(srv.customerName, style: const TextStyle(color: Colors.white, fontSize: 16)),
+                      Text(srv.customerName ?? 'Unknown', style: const TextStyle(color: Colors.white, fontSize: 16)),
                       const SizedBox(height: 4),
-                      Text(srv.address ?? 'No address provided', style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                      Text(srv.locationAddress ?? 'No address provided', style: const TextStyle(color: Colors.white54, fontSize: 12)),
                     ],
                   ),
                 ),
@@ -256,7 +259,7 @@ class _StaffServiceDetailState extends State<StaffServiceDetail> {
           const SizedBox(height: 12),
           const Text('Description', style: TextStyle(color: Colors.white54, fontSize: 12)),
           const SizedBox(height: 4),
-          Text(srv.description, style: const TextStyle(color: Colors.white)),
+          Text(srv.description ?? 'No description', style: const TextStyle(color: Colors.white)),
           const SizedBox(height: 16),
           const Text('Scheduled Date', style: TextStyle(color: Colors.white54, fontSize: 12)),
           const SizedBox(height: 4),
@@ -341,6 +344,7 @@ class _StaffServiceDetailState extends State<StaffServiceDetail> {
       case ServicePriority.low: color = Colors.green; break;
       case ServicePriority.medium: color = Colors.orange; break;
       case ServicePriority.high: color = Colors.red; break;
+      case ServicePriority.urgent: color = Colors.deepOrange; break;
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

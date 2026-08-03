@@ -33,7 +33,7 @@ class _StaffCustomerViewState extends State<StaffCustomerView> {
     
     // In a full implementation, we'd have a method to fetch a single customer if not loaded
     try {
-      final customer = customerProvider.customers.firstWhere((c) => c.uid == widget.customerId);
+      final customer = customerProvider.customers.firstWhere((c) => c.id == widget.customerId);
       setState(() {
         _customer = customer;
         _isLoading = false;
@@ -97,7 +97,7 @@ class _StaffCustomerViewState extends State<StaffCustomerView> {
         body: const EmptyState(
           icon: Icons.person_off,
           title: 'Customer Not Found',
-          message: 'Could not load customer details.',
+          subtitle: 'Could not load customer details.',
         ),
       );
     }
@@ -162,7 +162,7 @@ class _StaffCustomerViewState extends State<StaffCustomerView> {
                   children: [
                     const Icon(Icons.phone, size: 14, color: Colors.white54),
                     const SizedBox(width: 4),
-                    Text(cust.phoneNumber, style: const TextStyle(color: Colors.white70)),
+                    Text(cust.phone, style: const TextStyle(color: Colors.white70)),
                   ],
                 ),
                 if (cust.address != null) ...[
@@ -202,7 +202,7 @@ class _StaffCustomerViewState extends State<StaffCustomerView> {
             ),
             icon: const Icon(Icons.call),
             label: const Text('Call'),
-            onPressed: () => _makePhoneCall(cust.phoneNumber),
+            onPressed: () => _makePhoneCall(cust.phone),
           ),
         ),
         const SizedBox(width: 12),
@@ -242,7 +242,7 @@ class _StaffCustomerViewState extends State<StaffCustomerView> {
           return const EmptyState(
             icon: Icons.history,
             title: 'No History',
-            message: 'This customer has no associated service requests.',
+            subtitle: 'This customer has no associated service requests.',
           );
         }
 

@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 
 class StatsCard extends StatelessWidget {
-  final String label;
+  final String title;
   final int count;
   final IconData icon;
   final List<Color> gradientColors;
   final VoidCallback? onTap;
 
   const StatsCard({
-    Key? key,
-    required this.label,
+    super.key,
+    required this.title,
     required this.count,
     required this.icon,
     required this.gradientColors,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +26,7 @@ class StatsCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: gradientColors.map((c) => c.withOpacity(0.8)).toList(),
+              colors: gradientColors.map((c) => c.withAlpha(200)).toList(),
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -48,11 +48,11 @@ class StatsCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                label,
+                title,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.white.withAlpha(230),
                 ),
               ),
             ],

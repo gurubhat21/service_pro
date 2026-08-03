@@ -6,7 +6,6 @@ import 'package:service_pro/models/staff_model.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   Stream<User?> get authStateChanges => _auth.authStateChanges();
@@ -14,37 +13,40 @@ class AuthService {
 
   Future<UserCredential?> signInWithGoogle() async {
     try {
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      // google_sign_in 7.x: authenticate() returns GoogleSignInAccount
+      final GoogleSignInAccount? googleUser =
+          await GoogleSignIn.instance.authenticate();
       if (googleUser == null) return null;
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      final AuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
+      // Get authentication tokens
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      // Use idToken for Firebase credential (accessToken may not be available in 7.x)
+      final AuthCredential authCredential = GoogleAuthProvider.credential(
         idToken: googleAuth.idToken,
       );
 
-      final UserCredential userCredential = await _auth.signInWithCredential(credential);
-      
-      // Handle post-signin logic (check admins/staff collections)
-      await _handleUserSignIn(userCredential.user!);
-      
+      final UserCredential userCredential =
+          await _auth.signInWithCredential(authCredential);
+
+      if (userCredential.user != null) {
+        await _handleUserSignIn(userCredential.user!);
+      }
+
       return userCredential;
     } catch (e) {
-      print('Google sign in error: $e');
       rethrow;
     }
   }
 
   Future<void> _handleUserSignIn(User user) async {
-    // 1. Check if user is already an admin
     final adminDoc = await _firestore.collection('admins').doc(user.uid).get();
-    if (adminDoc.exists) return; // Already an admin
+    if (adminDoc.exists) return;
 
-    // 2. Check if user is already staff
     final staffDoc = await _firestore.collection('staff').doc(user.uid).get();
-    if (staffDoc.exists) return; // Already staff
+    if (staffDoc.exists) return;
 
-    // 3. Check if there's a staff invite for this email
     final inviteQuery = await _firestore
         .collection('staff_invites')
         .where('email', isEqualTo: user.email)
@@ -52,9 +54,8 @@ class AuthService {
         .get();
 
     if (inviteQuery.docs.isNotEmpty) {
-      // Create staff profile from invite
       final inviteData = inviteQuery.docs.first.data();
-      final adminId = inviteData['adminId'];
+      final adminId = inviteData['adminId'] as String;
       final role = inviteData['role'];
 
       final newStaff = StaffModel(
@@ -62,7 +63,7 @@ class AuthService {
         adminId: adminId,
         email: user.email!,
         name: user.displayName ?? 'Staff User',
-        phone: '', // Needs to be updated by user
+        phone: inviteData['phone'] as String? ?? '',
         role: role,
         isActive: true,
         photoUrl: user.photoURL,
@@ -70,16 +71,24 @@ class AuthService {
       );
 
       await _firestore.collection('staff').doc(user.uid).set(newStaff.toMap());
-      await inviteQuery.docs.first.reference.delete(); // Remove invite
-      return;
+      await inviteQuery.docs.first.reference.delete();
     }
+  }
 
-    // 4. Default: Register as a new Admin
+  Future<void> registerAdmin({
+    required String name,
+    required String phone,
+    String? businessName,
+  }) async {
+    final user = currentUser;
+    if (user == null) throw Exception('Not signed in');
+
     final newAdmin = AdminModel(
       uid: user.uid,
       email: user.email!,
-      name: user.displayName ?? 'New Admin',
-      phone: '', // Needs update
+      name: name,
+      phone: phone,
+      businessName: businessName,
       photoUrl: user.photoURL,
       createdAt: DateTime.now(),
     );
@@ -99,8 +108,24 @@ class AuthService {
     return null;
   }
 
+  Future<AdminModel?> getAdminModel() async {
+    final user = currentUser;
+    if (user == null) return null;
+    final doc = await _firestore.collection('admins').doc(user.uid).get();
+    if (!doc.exists) return null;
+    return AdminModel.fromMap(doc.data()!);
+  }
+
+  Future<StaffModel?> getStaffModel() async {
+    final user = currentUser;
+    if (user == null) return null;
+    final doc = await _firestore.collection('staff').doc(user.uid).get();
+    if (!doc.exists) return null;
+    return StaffModel.fromMap(doc.data()!);
+  }
+
   Future<void> signOut() async {
-    await _googleSignIn.signOut();
+    await GoogleSignIn.instance.disconnect();
     await _auth.signOut();
   }
 }

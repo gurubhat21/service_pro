@@ -30,7 +30,7 @@ class _StaffServiceListState extends State<StaffServiceList> {
           final matchesStatus = _selectedStatus == null || service.status == _selectedStatus;
           final searchLower = _searchQuery.toLowerCase();
           final matchesSearch = service.title.toLowerCase().contains(searchLower) ||
-              service.customerName.toLowerCase().contains(searchLower) ||
+              (service.customerName ?? '').toLowerCase().contains(searchLower) ||
               service.id.toLowerCase().contains(searchLower);
           return matchesStatus && matchesSearch;
         }).toList();
@@ -85,13 +85,13 @@ class _StaffServiceListState extends State<StaffServiceList> {
                   ? const EmptyState(
                       icon: Icons.search_off,
                       title: 'No Services Found',
-                      message: 'Try adjusting your search or filters.',
+                      subtitle: 'Try adjusting your search or filters.',
                     ).animate().fade(delay: 200.ms)
                   : RefreshIndicator(
                       onRefresh: () async {
                         // Using auth provider to reload for current user could go here
                         // For now just notify listeners in provider
-                        provider.refresh();
+                        provider.searchServices('');
                       },
                       color: const Color(0xFF00BCD4),
                       backgroundColor: const Color(0xFF1C2128),

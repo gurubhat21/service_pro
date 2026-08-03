@@ -12,6 +12,7 @@ class LocationPicker extends StatefulWidget {
 }
 
 class _LocationPickerState extends State<LocationPicker> {
+  final Geocoding _geocoding = Geocoding();
   GoogleMapController? _mapController;
   LatLng _currentPosition = const LatLng(20.5937, 78.9629); // Default to India
   Marker? _selectedMarker;
@@ -19,7 +20,7 @@ class _LocationPickerState extends State<LocationPicker> {
   bool _isLoading = true;
   final TextEditingController _searchController = TextEditingController();
 
-  final LocationService _locationService = LocationService();
+
 
   @override
   void initState() {
@@ -47,7 +48,7 @@ class _LocationPickerState extends State<LocationPicker> {
         throw Exception('Location permissions are permanently denied');
       }
 
-      Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      Position position = await Geolocator.getCurrentPosition(locationSettings: const LocationSettings(accuracy: LocationAccuracy.high));
       LatLng latLng = LatLng(position.latitude, position.longitude);
       
       _updateSelectedLocation(latLng);
@@ -76,7 +77,7 @@ class _LocationPickerState extends State<LocationPicker> {
     });
 
     try {
-      List<Placemark> placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
+      List<Placemark> placemarks = await _geocoding.placemarkFromCoordinates(position.latitude, position.longitude);
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks[0];
         setState(() {
@@ -98,7 +99,7 @@ class _LocationPickerState extends State<LocationPicker> {
     setState(() => _isLoading = true);
 
     try {
-      List<Location> locations = await locationFromAddress(query);
+      List<Location> locations = await _geocoding.locationFromAddress(query);
       if (locations.isNotEmpty) {
         LatLng latLng = LatLng(locations.first.latitude, locations.first.longitude);
         await _updateSelectedLocation(latLng);
@@ -117,35 +118,6 @@ class _LocationPickerState extends State<LocationPicker> {
 
   void _onMapCreated(GoogleMapController controller) {
     _mapController = controller;
-    // Set dark map style
-    controller.setMapStyle('''
-      [
-        {
-          "elementType": "geometry",
-          "stylers": [
-            {
-              "color": "#242f3e"
-            }
-          ]
-        },
-        {
-          "elementType": "labels.text.fill",
-          "stylers": [
-            {
-              "color": "#746855"
-            }
-          ]
-        },
-        {
-          "elementType": "labels.text.stroke",
-          "stylers": [
-            {
-              "color": "#242f3e"
-            }
-          ]
-        }
-      ]
-    ''');
   }
 
   @override

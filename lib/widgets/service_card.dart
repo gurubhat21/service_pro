@@ -1,44 +1,52 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:intl/intl.dart';
+import 'package:service_pro/config/constants.dart';
+import 'package:service_pro/models/service_request_model.dart';
 import 'package:service_pro/widgets/status_badge.dart';
-// import 'package:flutter_animate/flutter_animate.dart';
 
+/// A beautiful card widget displaying a service request
 class ServiceCard extends StatelessWidget {
-  final String title;
-  final String customerName;
-  final String status;
-  final String scheduledDate;
-  final String assignedStaff;
-  final String priority;
+  final ServiceRequestModel service;
   final VoidCallback onTap;
 
   const ServiceCard({
-    Key? key,
-    required this.title,
-    required this.customerName,
-    required this.status,
-    required this.scheduledDate,
-    required this.assignedStaff,
-    required this.priority,
+    super.key,
+    required this.service,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   Color _getPriorityColor() {
-    switch (priority.toLowerCase()) {
-      case 'high':
-        return Colors.red;
-      case 'medium':
-        return Colors.orange;
-      case 'low':
-      default:
-        return Colors.green;
+    switch (service.priority) {
+      case ServicePriority.low:
+        return const Color(0xFF66BB6A);
+      case ServicePriority.medium:
+        return const Color(0xFF42A5F5);
+      case ServicePriority.high:
+        return const Color(0xFFFFB300);
+      case ServicePriority.urgent:
+        return const Color(0xFFEF5350);
+    }
+  }
+
+  IconData _getTypeIcon() {
+    switch (service.serviceType) {
+      case ServiceType.computer:
+        return Icons.computer;
+      case ServiceType.laptop:
+        return Icons.laptop;
+      case ServiceType.cctv:
+        return Icons.videocam;
+      case ServiceType.solar:
+        return Icons.solar_power;
+      case ServiceType.ups:
+        return Icons.battery_charging_full;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    
-    Widget card = Card(
+    return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
@@ -46,42 +54,48 @@ class ServiceCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Container(
-                width: 6,
-                color: _getPriorityColor(),
-              ),
+              Container(width: 5, color: _getPriorityColor()),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(14),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
+                          Container(
+                            width: 36, height: 36,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF00BCD4).withAlpha(30),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(_getTypeIcon(), color: const Color(0xFF00BCD4), size: 20),
+                          ),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              title,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
+                              service.title,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
                                 color: Colors.white,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          StatusBadge(status: status),
+                          StatusBadge(status: service.status),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 10),
                       Row(
                         children: [
-                          Icon(Icons.person_outline, size: 16, color: theme.colorScheme.secondary),
-                          const SizedBox(width: 8),
+                          Icon(Icons.person_outline, size: 15, color: Colors.white.withAlpha(100)),
+                          const SizedBox(width: 6),
                           Expanded(
                             child: Text(
-                              customerName,
-                              style: theme.textTheme.bodyMedium,
+                              service.customerName ?? 'Unknown',
+                              style: TextStyle(fontSize: 13, color: Colors.white.withAlpha(150)),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -91,23 +105,23 @@ class ServiceCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          Icon(Icons.calendar_today_outlined, size: 16, color: theme.colorScheme.secondary),
-                          const SizedBox(width: 8),
+                          Icon(Icons.calendar_today_outlined, size: 15, color: Colors.white.withAlpha(100)),
+                          const SizedBox(width: 6),
                           Text(
-                            scheduledDate,
-                            style: theme.textTheme.bodyMedium,
+                            service.scheduledDate != null
+                                ? DateFormat('MMM dd, yyyy').format(service.scheduledDate!)
+                                : 'Not scheduled',
+                            style: TextStyle(fontSize: 13, color: Colors.white.withAlpha(150)),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(Icons.badge_outlined, size: 16, color: theme.colorScheme.secondary),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Assigned: $assignedStaff',
-                            style: theme.textTheme.bodyMedium,
-                          ),
+                          const Spacer(),
+                          if (service.assignedStaffName != null) ...[
+                            Icon(Icons.badge_outlined, size: 15, color: Colors.white.withAlpha(100)),
+                            const SizedBox(width: 4),
+                            Text(
+                              service.assignedStaffName!,
+                              style: TextStyle(fontSize: 12, color: Colors.white.withAlpha(130)),
+                            ),
+                          ],
                         ],
                       ),
                     ],
@@ -118,10 +132,6 @@ class ServiceCard extends StatelessWidget {
           ),
         ),
       ),
-    );
-
-    // If you have flutter_animate in pubspec.yaml:
-    // return card.animate().fadeIn().slideY(begin: 0.2, end: 0);
-    return card;
+    ).animate().fadeIn(duration: 200.ms).slideY(begin: 0.05);
   }
 }

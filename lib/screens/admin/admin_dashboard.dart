@@ -511,7 +511,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     ServiceStatus? status,
     ServiceRequestProvider provider,
   ) {
-    final isSelected = provider.selectedStatus == status;
+    final isSelected = provider.selectedStatus == status?.name;
     return FilterChip(
       label: Text(
         label,
@@ -522,7 +522,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         ),
       ),
       selected: isSelected,
-      onSelected: (_) => provider.filterByStatus(status),
+      onSelected: (_) => provider.filterByStatus(status?.name),
       backgroundColor: const Color(0xFF1C2128),
       selectedColor: const Color(0xFF00BCD4).withOpacity(0.3),
       side: BorderSide(
@@ -575,7 +575,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ),
               ),
               onChanged: (query) {
-                context.read<CustomerProvider>().searchCustomers(query);
+                context.read<CustomerProvider>().search(query);
               },
             ),
           ),
@@ -927,7 +927,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Widget _buildTypeFilterChip(String label, ServiceType? type) {
     return Consumer<ServiceRequestProvider>(
       builder: (context, provider, _) {
-        final isSelected = provider.selectedType == type;
+        final isSelected = provider.selectedType == type?.name;
         return FilterChip(
           label: Text(
             label,
@@ -938,7 +938,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           ),
           selected: isSelected,
           onSelected: (_) {
-            provider.filterByType(type);
+            provider.filterByType(type?.name);
             Navigator.pop(context);
           },
           backgroundColor: const Color(0xFF0D1117),

@@ -1,29 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:service_pro/config/constants.dart';
+import 'package:service_pro/models/staff_model.dart';
+import 'package:service_pro/services/firestore_service.dart';
+import 'dart:async';
 
 class StaffProvider extends ChangeNotifier {
-  List<dynamic> _staffList = [];
+  final FirestoreService _firestoreService = FirestoreService();
+
+  List<StaffModel> _staffList = [];
   bool _isLoading = false;
   String? _error;
 
-  List<dynamic> get staffList => _staffList;
+  StreamSubscription? _staffSubscription;
+
+  List<StaffModel> get staffList => _staffList;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
   Future<void> loadStaff(String adminId) async {
     _setLoading(true);
     try {
-      // TODO: Implement load staff
+      _staffSubscription?.cancel();
+      _staffSubscription =
+          _firestoreService.getStaffByAdmin(adminId).listen((data) {
+        _staffList = data;
+        _setLoading(false);
+      });
     } catch (e) {
       _error = e.toString();
-    } finally {
       _setLoading(false);
     }
   }
 
-  Future<void> inviteStaff(String email, String name, String phone, String role) async {
+  Future<void> inviteStaff({
+    required String adminId,
+    required String email,
+    required String name,
+    required String phone,
+    required StaffRole role,
+  }) async {
     _setLoading(true);
     try {
-      // TODO: Implement invite logic
+      await _firestoreService.inviteStaff(email, adminId, role);
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -33,7 +51,7 @@ class StaffProvider extends ChangeNotifier {
 
   Future<void> toggleStaffActive(String staffId, bool isActive) async {
     try {
-      // TODO: Implement toggle
+      // TODO: implement toggle in firestore
     } catch (e) {
       _error = e.toString();
       notifyListeners();
@@ -42,7 +60,7 @@ class StaffProvider extends ChangeNotifier {
 
   Future<void> removeStaff(String staffId) async {
     try {
-      // TODO: Implement removal
+      // TODO: implement remove in firestore
     } catch (e) {
       _error = e.toString();
       notifyListeners();
@@ -52,5 +70,11 @@ class StaffProvider extends ChangeNotifier {
   void _setLoading(bool value) {
     _isLoading = value;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _staffSubscription?.cancel();
+    super.dispose();
   }
 }

@@ -31,7 +31,7 @@ class _StaffDashboardState extends State<StaffDashboard> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final serviceProvider = Provider.of<ServiceRequestProvider>(context, listen: false);
     if (authProvider.currentUser != null) {
-      await serviceProvider.loadServicesForStaff(authProvider.currentUser!.uid);
+      await serviceProvider.loadServices(authProvider.currentUser!.uid);
     }
   }
 
@@ -135,7 +135,7 @@ class _StaffDashboardState extends State<StaffDashboard> {
                             title: 'Assigned',
                             count: assignedCount,
                             icon: Icons.assignment,
-                            color: Colors.amber,
+                            gradientColors: const [Color(0xFFF57F17), Color(0xFFFFB300)],
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -144,7 +144,7 @@ class _StaffDashboardState extends State<StaffDashboard> {
                             title: 'In Progress',
                             count: inProgressCount,
                             icon: Icons.build_circle,
-                            color: Colors.blue,
+                            gradientColors: const [Color(0xFF0277BD), Color(0xFF03A9F4)],
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -153,7 +153,7 @@ class _StaffDashboardState extends State<StaffDashboard> {
                             title: 'Completed',
                             count: completedCount,
                             icon: Icons.check_circle,
-                            color: Colors.green,
+                            gradientColors: const [Color(0xFF2E7D32), Color(0xFF66BB6A)],
                           ),
                         ),
                       ],
@@ -186,7 +186,7 @@ class _StaffDashboardState extends State<StaffDashboard> {
       return const EmptyState(
         icon: Icons.done_all,
         title: 'All caught up!',
-        message: 'You have no pending assignments right now.',
+        subtitle: 'You have no pending assignments right now.',
       ).animate().fade(delay: 400.ms);
     }
 

@@ -69,7 +69,7 @@ class AppRoutes {
           builder: (_) => StaffServiceDetail(service: service),
         );
       case locationPicker:
-        return MaterialPageRoute(builder: (_) => const LocationPickerScreen());
+        return MaterialPageRoute(builder: (_) => const LocationPicker());
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(

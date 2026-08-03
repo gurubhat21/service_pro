@@ -29,7 +29,7 @@ class AppTheme {
         bodyLarge: const TextStyle(color: Colors.white),
         bodyMedium: const TextStyle(color: Color(0xFF8B949E)),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: darkCard,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
@@ -83,7 +83,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(16),
         ),
       ),
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: darkSurface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),

@@ -1,42 +1,72 @@
 import 'package:flutter/material.dart';
+import 'package:service_pro/models/reminder_model.dart';
+import 'package:service_pro/services/firestore_service.dart';
+import 'dart:async';
 
 class ReminderProvider extends ChangeNotifier {
-  List<dynamic> _reminders = [];
+  final FirestoreService _firestoreService = FirestoreService();
+
+  List<ReminderModel> _reminders = [];
   bool _isLoading = false;
   String? _error;
 
-  List<dynamic> get reminders => _reminders;
+  StreamSubscription? _reminderSubscription;
+
+  List<ReminderModel> get reminders => _reminders;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  List<dynamic> get upcomingReminders {
-    // TODO: implement logic to filter upcoming reminders
-    return _reminders;
+  List<ReminderModel> get upcomingReminders {
+    final now = DateTime.now();
+    return _reminders.where((r) => r.remindAt.isAfter(now)).toList()
+      ..sort((a, b) => a.remindAt.compareTo(b.remindAt));
   }
 
   Future<void> loadReminders(String adminId) async {
     _setLoading(true);
     try {
-      // TODO: Implement load
+      _reminderSubscription?.cancel();
+      _reminderSubscription =
+          _firestoreService.getRemindersStream(adminId).listen((data) {
+        _reminders = data;
+        _setLoading(false);
+      });
     } catch (e) {
       _error = e.toString();
-    } finally {
       _setLoading(false);
     }
   }
 
-  Future<void> addReminder(dynamic reminderData) async {
+  Future<void> addReminder({
+    required String adminId,
+    required String title,
+    String? message,
+    required DateTime remindAt,
+    String? serviceRequestId,
+  }) async {
     try {
-      // TODO: Implement add
+      final id = _firestoreService.generateId('reminders');
+      final reminder = ReminderModel(
+        id: id,
+        adminId: adminId,
+        title: title,
+        message: message,
+        remindAt: remindAt,
+        serviceRequestId: serviceRequestId,
+        isNotified: false,
+        createdAt: DateTime.now(),
+      );
+      await _firestoreService.createReminder(reminder);
     } catch (e) {
       _error = e.toString();
       notifyListeners();
+      rethrow;
     }
   }
 
   Future<void> deleteReminder(String reminderId) async {
     try {
-      // TODO: Implement delete
+      await _firestoreService.deleteReminder(reminderId);
     } catch (e) {
       _error = e.toString();
       notifyListeners();
@@ -45,7 +75,7 @@ class ReminderProvider extends ChangeNotifier {
 
   Future<void> markAsNotified(String reminderId) async {
     try {
-      // TODO: Implement update
+      // TODO: implement mark as notified
     } catch (e) {
       _error = e.toString();
       notifyListeners();
@@ -55,5 +85,11 @@ class ReminderProvider extends ChangeNotifier {
   void _setLoading(bool value) {
     _isLoading = value;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _reminderSubscription?.cancel();
+    super.dispose();
   }
 }

@@ -1,66 +1,68 @@
 import 'package:flutter/material.dart';
+import 'package:service_pro/config/constants.dart';
 
+/// A chip/badge widget that shows service status with color coding
 class StatusBadge extends StatelessWidget {
-  final String status;
+  final ServiceStatus status;
 
-  const StatusBadge({Key? key, required this.status}) : super(key: key);
+  const StatusBadge({super.key, required this.status});
 
   @override
   Widget build(BuildContext context) {
-    Color backgroundColor;
-    Color textColor = Colors.white;
-    IconData icon;
-
-    switch (status.toLowerCase()) {
-      case 'pending':
-        backgroundColor = Colors.amber;
-        icon = Icons.access_time;
-        break;
-      case 'in progress':
-      case 'inprogress':
-        backgroundColor = Colors.blue;
-        icon = Icons.autorenew;
-        break;
-      case 'clear requested':
-      case 'clearrequested':
-        backgroundColor = Colors.orange;
-        icon = Icons.assignment_turned_in_outlined;
-        break;
-      case 'completed':
-        backgroundColor = Colors.green;
-        icon = Icons.check_circle_outline;
-        break;
-      case 'cancelled':
-        backgroundColor = Colors.red;
-        icon = Icons.cancel_outlined;
-        break;
-      default:
-        backgroundColor = Colors.grey;
-        icon = Icons.info_outline;
-    }
+    final color = _getStatusColor();
+    final icon = _getStatusIcon();
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: backgroundColor.withOpacity(0.15),
-        border: Border.all(color: backgroundColor, width: 1),
-        borderRadius: BorderRadius.circular(16),
+        color: color.withAlpha(40),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: backgroundColor),
+          Icon(icon, size: 14, color: color),
           const SizedBox(width: 4),
           Text(
-            status,
+            status.label,
             style: TextStyle(
-              color: backgroundColor,
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: color,
             ),
           ),
         ],
       ),
     );
+  }
+
+  Color _getStatusColor() {
+    switch (status) {
+      case ServiceStatus.pending:
+        return const Color(0xFFFFB300);
+      case ServiceStatus.inProgress:
+        return const Color(0xFF42A5F5);
+      case ServiceStatus.clearRequested:
+        return const Color(0xFFFF9800);
+      case ServiceStatus.completed:
+        return const Color(0xFF66BB6A);
+      case ServiceStatus.cancelled:
+        return const Color(0xFFEF5350);
+    }
+  }
+
+  IconData _getStatusIcon() {
+    switch (status) {
+      case ServiceStatus.pending:
+        return Icons.schedule;
+      case ServiceStatus.inProgress:
+        return Icons.autorenew;
+      case ServiceStatus.clearRequested:
+        return Icons.approval;
+      case ServiceStatus.completed:
+        return Icons.check_circle;
+      case ServiceStatus.cancelled:
+        return Icons.cancel;
+    }
   }
 }

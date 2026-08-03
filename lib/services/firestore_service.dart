@@ -139,7 +139,7 @@ class FirestoreService {
     // Update service request status
     final serviceRef = _db.collection('service_requests').doc(request.serviceRequestId);
     batch.update(serviceRef, {
-      'status': ServiceStatus.clear_requested.toString().split('.').last,
+      'status': ServiceStatus.clearRequested.toString().split('.').last,
       'updatedAt': FieldValue.serverTimestamp(),
     });
 
@@ -172,7 +172,7 @@ class FirestoreService {
     // Update service request
     final serviceRef = _db.collection('service_requests').doc(serviceRequestId);
     batch.update(serviceRef, {
-      'status': (approve ? ServiceStatus.completed : ServiceStatus.in_progress).toString().split('.').last,
+      'status': (approve ? ServiceStatus.completed : ServiceStatus.inProgress).toString().split('.').last,
       if (approve) 'completedDate': now,
       'updatedAt': now,
     });
@@ -183,5 +183,62 @@ class FirestoreService {
   // --- Reminders ---
   Future<void> createReminder(ReminderModel reminder) async {
     await _db.collection('reminders').doc(reminder.id).set(reminder.toMap());
+  }
+
+  Future<void> deleteReminder(String id) async {
+    await _db.collection('reminders').doc(id).delete();
+  }
+
+  Stream<List<ReminderModel>> getRemindersStream(String adminId) {
+    return _db
+        .collection('reminders')
+        .where('adminId', isEqualTo: adminId)
+        .orderBy('remindAt', descending: false)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => ReminderModel.fromMap(doc.data()))
+            .toList());
+  }
+
+  // --- Utility ---
+  /// Generate a new document ID for a collection
+  String generateId(String collection) {
+    return _db.collection(collection).doc().id;
+  }
+
+  // --- Aliases / additional methods used by providers ---
+
+  /// Alias for getServicesByAdmin
+  Stream<List<ServiceRequestModel>> getServicesStream(String adminId) {
+    return getServicesByAdmin(adminId);
+  }
+
+  /// Alias for getCustomersByAdmin
+  Stream<List<CustomerModel>> getCustomersStream(String adminId) {
+    return getCustomersByAdmin(adminId);
+  }
+
+  /// Update just the status of a service request
+  Future<void> updateServiceStatus(String serviceId, ServiceStatus status) async {
+    await _db.collection('service_requests').doc(serviceId).update({
+      'status': status.name,
+      'updatedAt': FieldValue.serverTimestamp(),
+      if (status == ServiceStatus.completed) 'completedDate': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Delete a service request
+  Future<void> deleteServiceRequest(String serviceId) async {
+    await _db.collection('service_requests').doc(serviceId).delete();
+  }
+
+  /// Update customer by ID with a map of fields
+  Future<void> updateCustomerFields(String customerId, Map<String, dynamic> data) async {
+    await _db.collection('customers').doc(customerId).update(data);
+  }
+
+  /// Delete a customer
+  Future<void> deleteCustomer(String customerId) async {
+    await _db.collection('customers').doc(customerId).delete();
   }
 }

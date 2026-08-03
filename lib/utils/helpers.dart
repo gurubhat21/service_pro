@@ -55,9 +55,9 @@ class Helpers {
     switch (status) {
       case ServiceStatus.pending:
         return Colors.orange;
-      case ServiceStatus.in_progress:
+      case ServiceStatus.inProgress:
         return Colors.blue;
-      case ServiceStatus.clear_requested:
+      case ServiceStatus.clearRequested:
         return Colors.purple;
       case ServiceStatus.completed:
         return Colors.green;
