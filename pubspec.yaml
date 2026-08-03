@@ -43,7 +43,7 @@ dependencies:
   url_launcher: any
   uuid: any
   image_picker: any
-  permission_handler: any
+  permission_handler: ^11.0.0
   shared_preferences: any
 
 dev_dependencies:
