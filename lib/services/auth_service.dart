@@ -8,33 +8,30 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Initialize GoogleSignIn with serverClientId for Firebase
-  // Replace this with your actual Web Client ID from Firebase Console
-  // Go to: Firebase Console → Authentication → Sign-in method → Google → Web Client ID
-  static const String _serverClientId =
-      ''; // Leave empty to use google-services.json default
-
-  late final GoogleSignIn _googleSignIn = GoogleSignIn(
-    serverClientId: _serverClientId.isNotEmpty ? _serverClientId : null,
-  );
-
   Stream<User?> get authStateChanges => _auth.authStateChanges();
   User? get currentUser => _auth.currentUser;
 
+  /// Set the server client ID before calling signInWithGoogle.
+  /// Get this from Firebase Console → Authentication → Sign-in method → Google → Web Client ID
+  /// It looks like: xxxxx.apps.googleusercontent.com
+  static void setServerClientId(String clientId) {
+    GoogleSignIn.instance.serverClientId = clientId;
+  }
+
   Future<UserCredential?> signInWithGoogle() async {
     try {
-      // google_sign_in 7.x: Use signIn() which works without serverClientId
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      // google_sign_in 7.x: authenticate() returns GoogleSignInAccount
+      final GoogleSignInAccount? googleUser =
+          await GoogleSignIn.instance.authenticate();
       if (googleUser == null) return null;
 
       // Get authentication tokens
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
-      // Create Firebase credential
+      // Use idToken for Firebase credential (accessToken not available in 7.x)
       final AuthCredential authCredential = GoogleAuthProvider.credential(
         idToken: googleAuth.idToken,
-        accessToken: googleAuth.accessToken,
       );
 
       final UserCredential userCredential =
@@ -135,7 +132,7 @@ class AuthService {
   }
 
   Future<void> signOut() async {
-    await _googleSignIn.disconnect();
+    await GoogleSignIn.instance.disconnect();
     await _auth.signOut();
   }
 }
