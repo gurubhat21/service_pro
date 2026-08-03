@@ -8,23 +8,33 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  // Initialize GoogleSignIn with serverClientId for Firebase
+  // Replace this with your actual Web Client ID from Firebase Console
+  // Go to: Firebase Console → Authentication → Sign-in method → Google → Web Client ID
+  static const String _serverClientId =
+      ''; // Leave empty to use google-services.json default
+
+  late final GoogleSignIn _googleSignIn = GoogleSignIn(
+    serverClientId: _serverClientId.isNotEmpty ? _serverClientId : null,
+  );
+
   Stream<User?> get authStateChanges => _auth.authStateChanges();
   User? get currentUser => _auth.currentUser;
 
   Future<UserCredential?> signInWithGoogle() async {
     try {
-      // google_sign_in 7.x: authenticate() returns GoogleSignInAccount
-      final GoogleSignInAccount? googleUser =
-          await GoogleSignIn.instance.authenticate();
+      // google_sign_in 7.x: Use signIn() which works without serverClientId
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) return null;
 
       // Get authentication tokens
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
-      // Use idToken for Firebase credential (accessToken may not be available in 7.x)
+      // Create Firebase credential
       final AuthCredential authCredential = GoogleAuthProvider.credential(
         idToken: googleAuth.idToken,
+        accessToken: googleAuth.accessToken,
       );
 
       final UserCredential userCredential =
@@ -125,7 +135,7 @@ class AuthService {
   }
 
   Future<void> signOut() async {
-    await GoogleSignIn.instance.disconnect();
+    await _googleSignIn.disconnect();
     await _auth.signOut();
   }
 }

@@ -189,13 +189,56 @@ class LoginScreen extends StatelessWidget {
                 const SizedBox(height: 40),
 
                 // Footer
-                Text(
-                  'By signing in, you agree to our Terms of Service',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white.withOpacity(0.3),
-                  ),
-                  textAlign: TextAlign.center,
+                Column(
+                  children: [
+                    Text(
+                      'By signing in, you agree to our Terms of Service',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white.withOpacity(0.3),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    // Divider
+                    Container(
+                      width: 60,
+                      height: 1,
+                      color: Colors.white.withOpacity(0.1),
+                    ),
+                    const SizedBox(height: 16),
+                    // Company branding
+                    Text(
+                      'By Sumukha Tech Solutions',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF00BCD4).withOpacity(0.8),
+                        letterSpacing: 0.5,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.phone,
+                          size: 14,
+                          color: Colors.white.withOpacity(0.4),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '+91 94498 31316',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.white.withOpacity(0.4),
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ).animate(delay: 700.ms).fadeIn(),
 
                 const SizedBox(height: 32),
