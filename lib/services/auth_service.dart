@@ -11,16 +11,10 @@ class AuthService {
   Stream<User?> get authStateChanges => _auth.authStateChanges();
   User? get currentUser => _auth.currentUser;
 
-  /// Set the server client ID before calling signInWithGoogle.
-  /// Get this from Firebase Console → Authentication → Sign-in method → Google → Web Client ID
-  /// It looks like: xxxxx.apps.googleusercontent.com
-  static void setServerClientId(String clientId) {
-    GoogleSignIn.instance.serverClientId = clientId;
-  }
-
   Future<UserCredential?> signInWithGoogle() async {
     try {
       // google_sign_in 7.x: authenticate() returns GoogleSignInAccount
+      // serverClientId is auto-read from google-services.json oauth_client
       final GoogleSignInAccount? googleUser =
           await GoogleSignIn.instance.authenticate();
       if (googleUser == null) return null;
