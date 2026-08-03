@@ -18,7 +18,7 @@ dependencies:
   firebase_storage: any
 
   # Google Sign-In
-  google_sign_in: any
+  google_sign_in: ^6.2.0
 
   # Google Maps & Location
   google_maps_flutter: any
