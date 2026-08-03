@@ -13,7 +13,6 @@ class LoadingShimmer extends StatelessWidget {
     
     final theme = Theme.of(context);
     final baseColor = theme.colorScheme.surface;
-    final highlightColor = theme.colorScheme.surface.withOpacity(0.5);
 
     return ListView.builder(
       itemCount: itemCount,

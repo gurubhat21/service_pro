@@ -123,7 +123,7 @@ class ServiceDetailScreen extends StatelessWidget {
 
   Widget _buildHeaderCard() {
     final typeIcon = _getTypeIconData(service.serviceType);
-    final statusColor = _getStatusColor(service.status);
+    final _ = _getStatusColor(service.status);
 
     return Container(
       width: double.infinity,

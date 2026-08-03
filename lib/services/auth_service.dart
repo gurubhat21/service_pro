@@ -21,7 +21,7 @@ class AuthService {
 
       // Get authentication tokens
       final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
+          googleUser.authentication;
 
       // Use idToken for Firebase credential (accessToken not available in 7.x)
       final AuthCredential authCredential = GoogleAuthProvider.credential(

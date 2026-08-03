@@ -46,8 +46,6 @@ class Helpers {
         return Icons.solar_power;
       case ServiceType.ups:
         return Icons.battery_charging_full;
-      default:
-        return Icons.build;
     }
   }
 
@@ -63,8 +61,6 @@ class Helpers {
         return Colors.green;
       case ServiceStatus.cancelled:
         return Colors.red;
-      default:
-        return Colors.grey;
     }
   }
 
