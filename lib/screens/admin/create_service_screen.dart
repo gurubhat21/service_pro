@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:service_pro/config/constants.dart';
@@ -145,13 +146,103 @@ class _CreateServiceScreenState extends State<CreateServiceScreen> {
     showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: const Color(0xFF1C2128), shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))), builder: (ctx) {
       return StatefulBuilder(builder: (ctx, setSheet) {
         return SizedBox(height: MediaQuery.of(ctx).size.height * 0.7, child: Column(children: [
-          const SizedBox(height: 12), Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(2))),
-          Padding(padding: const EdgeInsets.all(20), child: TextField(controller: searchCtrl, style: const TextStyle(color: Colors.white), decoration: InputDecoration(hintText: 'Search customers...', hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)), prefixIcon: Icon(Icons.search, color: Colors.white.withOpacity(0.4)), filled: true, fillColor: const Color(0xFF0D1117), border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none)), onChanged: (q) { setSheet(() { filtered = customers.where((c) => c.name.toLowerCase().contains(q.toLowerCase()) || c.phone.contains(q)).toList(); }); })),
-          Expanded(child: filtered.isEmpty ? Center(child: Text('No customers found', style: TextStyle(color: Colors.white.withOpacity(0.4)))) : ListView.separated(padding: const EdgeInsets.symmetric(horizontal: 20), itemCount: filtered.length, separatorBuilder: (_, __) => const SizedBox(height: 8), itemBuilder: (_, i) {
+          const SizedBox(height: 12), Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white.withAlpha(51), borderRadius: BorderRadius.circular(2))),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+            child: Row(children: [
+              Expanded(child: OutlinedButton.icon(onPressed: () { Navigator.pop(ctx); _showAddNewCustomerDialog(); }, icon: const Icon(Icons.person_add, size: 18), label: const Text('Add New'), style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF00BCD4), side: const BorderSide(color: Color(0xFF00BCD4), width: 1.2), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(vertical: 12)))),
+              const SizedBox(width: 10),
+              Expanded(child: OutlinedButton.icon(onPressed: () { Navigator.pop(ctx); _importContactAsCustomer(); }, icon: const Icon(Icons.contacts, size: 18), label: const Text('Phone Book'), style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFFFB300), side: const BorderSide(color: Color(0xFFFFB300), width: 1.2), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(vertical: 12)))),
+            ]),
+          ),
+          Padding(padding: const EdgeInsets.fromLTRB(20, 8, 20, 0), child: TextField(controller: searchCtrl, style: const TextStyle(color: Colors.white), decoration: InputDecoration(hintText: 'Search customers...', hintStyle: TextStyle(color: Colors.white.withAlpha(77)), prefixIcon: Icon(Icons.search, color: Colors.white.withAlpha(102)), filled: true, fillColor: const Color(0xFF0D1117), border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none)), onChanged: (q) { setSheet(() { filtered = customers.where((c) => c.name.toLowerCase().contains(q.toLowerCase()) || c.phone.contains(q)).toList(); }); })),
+          const SizedBox(height: 8),
+          Expanded(child: filtered.isEmpty ? Center(child: Text('No customers found', style: TextStyle(color: Colors.white.withAlpha(102)))) : ListView.separated(padding: const EdgeInsets.symmetric(horizontal: 20), itemCount: filtered.length, separatorBuilder: (_, __) => const SizedBox(height: 8), itemBuilder: (_, i) {
             final c = filtered[i];
-            return ListTile(onTap: () { setState(() { _selectedCustomer = c; _addressController.text = c.address ?? ''; _locationLat = c.latitude; _locationLng = c.longitude; }); Navigator.pop(ctx); }, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), tileColor: const Color(0xFF0D1117), leading: CircleAvatar(backgroundColor: const Color(0xFF00BCD4).withOpacity(0.15), child: Text(c.name.isNotEmpty ? c.name[0].toUpperCase() : '?', style: const TextStyle(color: Color(0xFF00BCD4), fontWeight: FontWeight.w700))), title: Text(c.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)), subtitle: Text(c.phone, style: TextStyle(color: Colors.white.withOpacity(0.5))), trailing: Icon(Icons.chevron_right, color: Colors.white.withOpacity(0.3)));
+            return ListTile(onTap: () { setState(() { _selectedCustomer = c; _addressController.text = c.address ?? ''; _locationLat = c.latitude; _locationLng = c.longitude; }); Navigator.pop(ctx); }, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), tileColor: const Color(0xFF0D1117), leading: CircleAvatar(backgroundColor: const Color(0xFF00BCD4).withAlpha(38), child: Text(c.name.isNotEmpty ? c.name[0].toUpperCase() : '?', style: const TextStyle(color: Color(0xFF00BCD4), fontWeight: FontWeight.w700))), title: Text(c.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)), subtitle: Text(c.phone, style: TextStyle(color: Colors.white.withAlpha(128))), trailing: Icon(Icons.chevron_right, color: Colors.white.withAlpha(77)));
           })),
         ]));
+      });
+    });
+  }
+
+  void _showAddNewCustomerDialog() {
+    final nameCtrl = TextEditingController();
+    final phoneCtrl = TextEditingController();
+    final emailCtrl = TextEditingController();
+    final addrCtrl = TextEditingController();
+    showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: const Color(0xFF1C2128), shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))), builder: (ctx) {
+      return Padding(padding: EdgeInsets.fromLTRB(24, 16, 24, MediaQuery.of(ctx).viewInsets.bottom + 24), child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white.withAlpha(51), borderRadius: BorderRadius.circular(2)))),
+        const SizedBox(height: 20),
+        const Text('Add New Customer', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white)),
+        const SizedBox(height: 24),
+        _buildQuickField(nameCtrl, 'Name *', Icons.person_outline),
+        const SizedBox(height: 14),
+        _buildQuickField(phoneCtrl, 'Mobile Number *', Icons.phone_outlined, TextInputType.phone),
+        const SizedBox(height: 14),
+        _buildQuickField(emailCtrl, 'Email (optional)', Icons.email_outlined, TextInputType.emailAddress),
+        const SizedBox(height: 14),
+        _buildQuickField(addrCtrl, 'Address (optional)', Icons.location_on_outlined),
+        const SizedBox(height: 24),
+        SizedBox(width: double.infinity, height: 52, child: ElevatedButton(
+          onPressed: () {
+            if (nameCtrl.text.trim().isEmpty || phoneCtrl.text.trim().isEmpty) { ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Name and phone are required'))); return; }
+            final adminId = context.read<AuthProvider>().currentUser?.uid ?? '';
+            context.read<CustomerProvider>().addCustomer(adminId: adminId, name: nameCtrl.text.trim(), phone: phoneCtrl.text.trim(), email: emailCtrl.text.trim().isEmpty ? null : emailCtrl.text.trim(), address: addrCtrl.text.trim().isEmpty ? null : addrCtrl.text.trim());
+            Navigator.pop(ctx);
+            Future.delayed(const Duration(milliseconds: 500), () { if (mounted) { final custs = context.read<CustomerProvider>().customers; if (custs.isNotEmpty) setState(() { _selectedCustomer = custs.last; _addressController.text = _selectedCustomer?.address ?? ''; }); } });
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${nameCtrl.text.trim()} added & selected!'), backgroundColor: const Color(0xFF66BB6A)));
+          },
+          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00BCD4), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+          child: const Text('Add & Select Customer', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16)),
+        )),
+      ])));
+    });
+  }
+
+  Widget _buildQuickField(TextEditingController controller, String hint, IconData icon, [TextInputType? keyboardType]) {
+    return TextField(controller: controller, keyboardType: keyboardType, style: const TextStyle(color: Colors.white), decoration: InputDecoration(hintText: hint, hintStyle: TextStyle(color: Colors.white.withAlpha(77)), prefixIcon: Icon(icon, color: Colors.white.withAlpha(102), size: 20), filled: true, fillColor: const Color(0xFF0D1117), border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none), contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14)));
+  }
+
+  Future<void> _importContactAsCustomer() async {
+    final permStatus = await FlutterContacts.permissions.request(PermissionType.read);
+    if (permStatus != PermissionStatus.granted) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Contacts permission denied'), backgroundColor: Colors.red)); return; }
+    final contacts = await FlutterContacts.getAll(properties: {ContactProperty.phone, ContactProperty.email, ContactProperty.address, ContactProperty.name});
+    if (!mounted) return;
+    final withPhone = contacts.where((c) => c.phones.isNotEmpty).toList();
+    if (withPhone.isEmpty) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No contacts with phone numbers found'))); return; }
+    if (!mounted) return;
+    showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: const Color(0xFF1C2128), shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))), builder: (ctx) {
+      final sc = TextEditingController();
+      List<Contact> flt = withPhone;
+      return StatefulBuilder(builder: (ctx, ss) {
+        return DraggableScrollableSheet(initialChildSize: 0.7, maxChildSize: 0.9, minChildSize: 0.4, expand: false, builder: (ctx, scCtrl) {
+          return Column(children: [
+            Padding(padding: const EdgeInsets.only(top: 12, bottom: 8), child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white.withAlpha(50), borderRadius: BorderRadius.circular(2)))),
+            const Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8), child: Row(children: [Icon(Icons.contacts, color: Color(0xFFFFB300), size: 24), SizedBox(width: 12), Text('Select Contact', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white))])),
+            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8), child: TextField(controller: sc, style: const TextStyle(color: Colors.white), decoration: InputDecoration(hintText: 'Search contacts...', hintStyle: TextStyle(color: Colors.white.withAlpha(80)), prefixIcon: Icon(Icons.search, color: Colors.white.withAlpha(100)), filled: true, fillColor: const Color(0xFF0D1117), border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none), contentPadding: const EdgeInsets.symmetric(vertical: 12)), onChanged: (q) { ss(() { flt = withPhone.where((c) { final n = (c.displayName ?? '').toLowerCase(); return n.contains(q.toLowerCase()) || c.phones.first.number.contains(q); }).toList(); }); })),
+            Expanded(child: ListView.builder(controller: scCtrl, itemCount: flt.length, padding: const EdgeInsets.symmetric(horizontal: 12), itemBuilder: (ctx, i) {
+              final ct = flt[i]; final dn = ct.displayName ?? 'Unknown'; final ph = ct.phones.first.number;
+              return ListTile(
+                leading: CircleAvatar(backgroundColor: const Color(0xFFFFB300).withAlpha(40), child: Text(dn.isNotEmpty ? dn[0].toUpperCase() : '?', style: const TextStyle(color: Color(0xFFFFB300), fontWeight: FontWeight.bold))),
+                title: Text(dn, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
+                subtitle: Text(ph, style: TextStyle(color: Colors.white.withAlpha(120))),
+                trailing: const Icon(Icons.add_circle_outline, color: Color(0xFFFFB300)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  final em = ct.emails.isNotEmpty ? ct.emails.first.address : '';
+                  String addr = '';
+                  if (ct.addresses.isNotEmpty) { final a = ct.addresses.first; addr = a.formatted ?? [a.street, a.city, a.state, a.postalCode, a.country].where((p) => p != null && p.isNotEmpty).join(', '); }
+                  final adminId = context.read<AuthProvider>().currentUser?.uid ?? '';
+                  context.read<CustomerProvider>().addCustomer(adminId: adminId, name: dn, phone: ph, email: em.isNotEmpty ? em : null, address: addr.isNotEmpty ? addr : null);
+                  Future.delayed(const Duration(milliseconds: 500), () { if (mounted) { final custs = context.read<CustomerProvider>().customers; if (custs.isNotEmpty) setState(() { _selectedCustomer = custs.last; _addressController.text = _selectedCustomer?.address ?? ''; }); } });
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$dn added & selected!'), backgroundColor: const Color(0xFF66BB6A)));
+                },
+              );
+            })),
+          ]);
+        });
       });
     });
   }
