@@ -373,7 +373,7 @@ class _CustomerManagementState extends State<CustomerManagement> {
 
   Future<void> _importFromContacts(BuildContext context) async {
     // Request permission using flutter_contacts 2.1.0 API
-    final permStatus = await FlutterContacts.permissions.request(PermissionType.readOnly);
+    final permStatus = await FlutterContacts.permissions.request(PermissionType.read);
     if (permStatus != PermissionStatus.granted) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
