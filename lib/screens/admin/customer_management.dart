@@ -57,8 +57,8 @@ class _CustomerManagementState extends State<CustomerManagement> {
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 hintText: 'Search by name or phone...',
-                hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
-                prefixIcon: Icon(Icons.search, color: Colors.white.withOpacity(0.4)),
+                hintStyle: TextStyle(color: Colors.white.withAlpha(77)),
+                prefixIcon: Icon(Icons.search, color: Colors.white.withAlpha(102)),
                 filled: true,
                 fillColor: const Color(0xFF1C2128),
                 border: OutlineInputBorder(
@@ -172,7 +172,7 @@ class _CustomerManagementState extends State<CustomerManagement> {
                       child: Container(
                         width: 40, height: 4,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withAlpha(51),
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -220,15 +220,15 @@ class _CustomerManagementState extends State<CustomerManagement> {
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
                             color: lat != null
-                                ? const Color(0xFF66BB6A).withOpacity(0.5)
-                                : Colors.white.withOpacity(0.1),
+                                ? const Color(0xFF66BB6A).withAlpha(128)
+                                : Colors.white.withAlpha(26),
                           ),
                         ),
                         child: Row(
                           children: [
                             Icon(
                               lat != null ? Icons.check_circle : Icons.map_outlined,
-                              color: lat != null ? const Color(0xFF66BB6A) : Colors.white.withOpacity(0.4),
+                              color: lat != null ? const Color(0xFF66BB6A) : Colors.white.withAlpha(102),
                               size: 22,
                             ),
                             const SizedBox(width: 12),
@@ -238,14 +238,14 @@ class _CustomerManagementState extends State<CustomerManagement> {
                                     ? 'Location set (${lat!.toStringAsFixed(4)}, ${lng!.toStringAsFixed(4)})'
                                     : 'Pick location on Google Maps',
                                 style: TextStyle(
-                                  color: lat != null ? Colors.white : Colors.white.withOpacity(0.4),
+                                  color: lat != null ? Colors.white : Colors.white.withAlpha(102),
                                   fontSize: 14,
                                 ),
                               ),
                             ),
                             Icon(
                               Icons.chevron_right,
-                              color: Colors.white.withOpacity(0.3),
+                              color: Colors.white.withAlpha(77),
                             ),
                           ],
                         ),
@@ -321,8 +321,8 @@ class _CustomerManagementState extends State<CustomerManagement> {
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
-        prefixIcon: Icon(icon, color: Colors.white.withOpacity(0.4), size: 20),
+        hintStyle: TextStyle(color: Colors.white.withAlpha(77)),
+        prefixIcon: Icon(icon, color: Colors.white.withAlpha(102), size: 20),
         filled: true,
         fillColor: const Color(0xFF0D1117),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
@@ -340,12 +340,12 @@ class _CustomerManagementState extends State<CustomerManagement> {
         title: const Text('Delete Customer', style: TextStyle(color: Colors.white)),
         content: Text(
           'Are you sure you want to delete ${customer.name}? This cannot be undone.',
-          style: TextStyle(color: Colors.white.withOpacity(0.7)),
+          style: TextStyle(color: Colors.white.withAlpha(179)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: Colors.white.withOpacity(0.5))),
+            child: Text('Cancel', style: TextStyle(color: Colors.white.withAlpha(128))),
           ),
           ElevatedButton(
             onPressed: () {
@@ -372,8 +372,9 @@ class _CustomerManagementState extends State<CustomerManagement> {
   }
 
   Future<void> _importFromContacts(BuildContext context) async {
-    // Request permission
-    if (!await FlutterContacts.requestPermission(readonly: true)) {
+    // Request permission using flutter_contacts 2.1.0 API
+    final permStatus = await FlutterContacts.permissions.request(PermissionType.readOnly);
+    if (permStatus != PermissionStatus.granted) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -385,10 +386,9 @@ class _CustomerManagementState extends State<CustomerManagement> {
       return;
     }
 
-    // Get contacts with phone numbers
-    final contacts = await FlutterContacts.getContacts(
-      withProperties: true,
-      withPhoto: false,
+    // Get contacts with phone properties (flutter_contacts 2.1.0 API)
+    final contacts = await FlutterContacts.getAll(
+      properties: {ContactProperty.phone, ContactProperty.email, ContactProperty.address, ContactProperty.name},
     );
 
     if (!mounted) return;
@@ -399,13 +399,16 @@ class _CustomerManagementState extends State<CustomerManagement> {
         .toList();
 
     if (contactsWithPhone.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No contacts with phone numbers found')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No contacts with phone numbers found')),
+        );
+      }
       return;
     }
 
-    // Show contact picker dialog
+    // Show contact picker bottom sheet
+    if (!mounted) return;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -413,18 +416,18 @@ class _CustomerManagementState extends State<CustomerManagement> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) {
+      builder: (ctx) {
         final searchController = TextEditingController();
         List<Contact> filtered = contactsWithPhone;
 
         return StatefulBuilder(
-          builder: (context, setSheetState) {
+          builder: (ctx, setSheetState) {
             return DraggableScrollableSheet(
               initialChildSize: 0.7,
               maxChildSize: 0.9,
               minChildSize: 0.4,
               expand: false,
-              builder: (context, scrollController) {
+              builder: (ctx, scrollController) {
                 return Column(
                   children: [
                     // Handle bar
@@ -475,7 +478,7 @@ class _CustomerManagementState extends State<CustomerManagement> {
                         onChanged: (query) {
                           setSheetState(() {
                             filtered = contactsWithPhone.where((c) {
-                              final name = c.displayName.toLowerCase();
+                              final name = (c.displayName ?? '').toLowerCase();
                               final phone = c.phones.first.number;
                               return name.contains(query.toLowerCase()) ||
                                   phone.contains(query);
@@ -490,15 +493,16 @@ class _CustomerManagementState extends State<CustomerManagement> {
                         controller: scrollController,
                         itemCount: filtered.length,
                         padding: const EdgeInsets.symmetric(horizontal: 12),
-                        itemBuilder: (context, index) {
+                        itemBuilder: (ctx, index) {
                           final contact = filtered[index];
+                          final displayName = contact.displayName ?? 'Unknown';
                           final phone = contact.phones.first.number;
                           return ListTile(
                             leading: CircleAvatar(
                               backgroundColor: const Color(0xFF00BCD4).withAlpha(40),
                               child: Text(
-                                contact.displayName.isNotEmpty
-                                    ? contact.displayName[0].toUpperCase()
+                                displayName.isNotEmpty
+                                    ? displayName[0].toUpperCase()
                                     : '?',
                                 style: const TextStyle(
                                   color: Color(0xFF00BCD4),
@@ -507,7 +511,7 @@ class _CustomerManagementState extends State<CustomerManagement> {
                               ),
                             ),
                             title: Text(
-                              contact.displayName,
+                              displayName,
                               style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
                             ),
                             subtitle: Text(
@@ -516,12 +520,7 @@ class _CustomerManagementState extends State<CustomerManagement> {
                             ),
                             trailing: const Icon(Icons.add_circle_outline, color: Color(0xFF00BCD4)),
                             onTap: () {
-                              Navigator.pop(context);
-                              _showAddCustomerDialog(context);
-                              // Pre-fill after dialog opens
-                              Future.delayed(const Duration(milliseconds: 300), () {
-                                // The dialog is showing, find and fill controllers
-                              });
+                              Navigator.pop(ctx);
                               _addFromContact(contact);
                             },
                           );
@@ -539,12 +538,24 @@ class _CustomerManagementState extends State<CustomerManagement> {
   }
 
   void _addFromContact(Contact contact) {
-    final name = contact.displayName;
+    final name = contact.displayName ?? 'Unknown';
     final phone = contact.phones.isNotEmpty ? contact.phones.first.number : '';
     final email = contact.emails.isNotEmpty ? contact.emails.first.address : '';
-    final address = contact.addresses.isNotEmpty
-        ? contact.addresses.first.address
-        : '';
+
+    // Build address from Address components (flutter_contacts 2.1.0: all fields are String?)
+    String address = '';
+    if (contact.addresses.isNotEmpty) {
+      final addr = contact.addresses.first;
+      // Use formatted if available, otherwise build from components
+      if (addr.formatted != null && addr.formatted!.isNotEmpty) {
+        address = addr.formatted!;
+      } else {
+        final parts = [addr.street, addr.city, addr.state, addr.postalCode, addr.country]
+            .where((p) => p != null && p.isNotEmpty)
+            .toList();
+        address = parts.join(', ');
+      }
+    }
 
     final adminId = context.read<AuthProvider>().currentUser?.uid ?? '';
     final provider = context.read<CustomerProvider>();
