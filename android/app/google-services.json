@@ -1,18 +1,26 @@
 {
   "project_info": {
     "project_number": "308093868026",
-    "project_id": "service-pro-placeholder",
-    "storage_bucket": "service-pro-placeholder.appspot.com"
+    "project_id": "servicepro-ead5a",
+    "storage_bucket": "servicepro-ead5a.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:308093868026:android:0000000000000000000000",
+        "mobilesdk_app_id": "1:308093868026:android:f1c150f4a735f248a9b643",
         "android_client_info": {
           "package_name": "com.servicepro.service_pro"
         }
       },
       "oauth_client": [
+        {
+          "client_id": "308093868026-ohej3e71ak36aj6d5ahj3locehsq1dtm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.servicepro.service_pro",
+            "certificate_hash": "925d36b1203f7aedba0bca42e08fafb098cc8347"
+          }
+        },
         {
           "client_id": "308093868026-1h2mpkveteld5chmnqg6aq9jovs36ev0.apps.googleusercontent.com",
           "client_type": 3
@@ -20,7 +28,7 @@
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyPlaceholderKeyForBuildOnly000000"
+          "current_key": "AIzaSyBS4fERQtIPyloJkV2IaW4TACoPX0R7YeE"
         }
       ],
       "services": {
