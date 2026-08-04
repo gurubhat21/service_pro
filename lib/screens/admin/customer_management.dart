@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:provider/provider.dart';
 import 'package:service_pro/config/routes.dart';
 import 'package:service_pro/models/customer_model.dart';
@@ -36,6 +37,11 @@ class _CustomerManagementState extends State<CustomerManagement> {
       appBar: AppBar(
         title: const Text('Customers'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.contacts_outlined),
+            tooltip: 'Import from Phone Book',
+            onPressed: () => _importFromContacts(context),
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadCustomers,
@@ -112,11 +118,24 @@ class _CustomerManagementState extends State<CustomerManagement> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddCustomerDialog(context),
-        backgroundColor: const Color(0xFF00BCD4),
-        icon: const Icon(Icons.person_add, color: Colors.white),
-        label: const Text('Add Customer', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton.small(
+            heroTag: 'import_contacts',
+            onPressed: () => _importFromContacts(context),
+            backgroundColor: const Color(0xFF1C2128),
+            child: const Icon(Icons.contacts, color: Color(0xFF00BCD4), size: 20),
+          ),
+          const SizedBox(height: 10),
+          FloatingActionButton.extended(
+            heroTag: 'add_customer',
+            onPressed: () => _showAddCustomerDialog(context),
+            backgroundColor: const Color(0xFF00BCD4),
+            icon: const Icon(Icons.person_add, color: Colors.white),
+            label: const Text('Add Customer', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+          ),
+        ],
       ),
     );
   }
@@ -345,12 +364,204 @@ class _CustomerManagementState extends State<CustomerManagement> {
   }
 
   void _openMap(CustomerModel customer) {
-    // Open Google Maps with customer location
     if (customer.latitude != null && customer.longitude != null) {
-      // Will use location_service to open maps
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Opening maps for ${customer.name}...')),
       );
     }
+  }
+
+  Future<void> _importFromContacts(BuildContext context) async {
+    // Request permission
+    if (!await FlutterContacts.requestPermission(readonly: true)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Contacts permission denied'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Get contacts with phone numbers
+    final contacts = await FlutterContacts.getContacts(
+      withProperties: true,
+      withPhoto: false,
+    );
+
+    if (!mounted) return;
+
+    // Filter contacts that have phone numbers
+    final contactsWithPhone = contacts
+        .where((c) => c.phones.isNotEmpty)
+        .toList();
+
+    if (contactsWithPhone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No contacts with phone numbers found')),
+      );
+      return;
+    }
+
+    // Show contact picker dialog
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF1C2128),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        final searchController = TextEditingController();
+        List<Contact> filtered = contactsWithPhone;
+
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return DraggableScrollableSheet(
+              initialChildSize: 0.7,
+              maxChildSize: 0.9,
+              minChildSize: 0.4,
+              expand: false,
+              builder: (context, scrollController) {
+                return Column(
+                  children: [
+                    // Handle bar
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12, bottom: 8),
+                      child: Container(
+                        width: 40, height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withAlpha(50),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    // Title
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      child: Row(
+                        children: [
+                          Icon(Icons.contacts, color: Color(0xFF00BCD4), size: 24),
+                          SizedBox(width: 12),
+                          Text(
+                            'Select Contact',
+                            style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Search
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      child: TextField(
+                        controller: searchController,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: 'Search contacts...',
+                          hintStyle: TextStyle(color: Colors.white.withAlpha(80)),
+                          prefixIcon: Icon(Icons.search, color: Colors.white.withAlpha(100)),
+                          filled: true,
+                          fillColor: const Color(0xFF0D1117),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        onChanged: (query) {
+                          setSheetState(() {
+                            filtered = contactsWithPhone.where((c) {
+                              final name = c.displayName.toLowerCase();
+                              final phone = c.phones.first.number;
+                              return name.contains(query.toLowerCase()) ||
+                                  phone.contains(query);
+                            }).toList();
+                          });
+                        },
+                      ),
+                    ),
+                    // Contact list
+                    Expanded(
+                      child: ListView.builder(
+                        controller: scrollController,
+                        itemCount: filtered.length,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        itemBuilder: (context, index) {
+                          final contact = filtered[index];
+                          final phone = contact.phones.first.number;
+                          return ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: const Color(0xFF00BCD4).withAlpha(40),
+                              child: Text(
+                                contact.displayName.isNotEmpty
+                                    ? contact.displayName[0].toUpperCase()
+                                    : '?',
+                                style: const TextStyle(
+                                  color: Color(0xFF00BCD4),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            title: Text(
+                              contact.displayName,
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                            ),
+                            subtitle: Text(
+                              phone,
+                              style: TextStyle(color: Colors.white.withAlpha(120)),
+                            ),
+                            trailing: const Icon(Icons.add_circle_outline, color: Color(0xFF00BCD4)),
+                            onTap: () {
+                              Navigator.pop(context);
+                              _showAddCustomerDialog(context);
+                              // Pre-fill after dialog opens
+                              Future.delayed(const Duration(milliseconds: 300), () {
+                                // The dialog is showing, find and fill controllers
+                              });
+                              _addFromContact(contact);
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _addFromContact(Contact contact) {
+    final name = contact.displayName;
+    final phone = contact.phones.isNotEmpty ? contact.phones.first.number : '';
+    final email = contact.emails.isNotEmpty ? contact.emails.first.address : '';
+    final address = contact.addresses.isNotEmpty
+        ? contact.addresses.first.address
+        : '';
+
+    final adminId = context.read<AuthProvider>().currentUser?.uid ?? '';
+    final provider = context.read<CustomerProvider>();
+
+    provider.addCustomer(
+      adminId: adminId,
+      name: name,
+      phone: phone,
+      email: email.isNotEmpty ? email : null,
+      address: address.isNotEmpty ? address : null,
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$name added from contacts!'),
+        backgroundColor: const Color(0xFF66BB6A),
+      ),
+    );
   }
 }
